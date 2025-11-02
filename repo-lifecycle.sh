@@ -59,6 +59,13 @@ create_repo() {
       source_abs_path=$(readlink -f "$submodule_source")
       git submodule add "file://$source_abs_path" "$submodule_path"
       echo "Added submodule $i: $submodule_source at $submodule_path"
+      read -p "Enter specific revision (commit hash, branch, or tag) for submodule $i (leave empty for default): " submodule_revision
+      if [ -n "$submodule_revision" ]; then
+        cd "$submodule_path" || exit 1
+        git checkout "$submodule_revision"
+        cd - || exit 1
+        echo "Checked out submodule $i to revision $submodule_revision"
+      fi
     done
     git config --global --unset protocol.file.allow
 
