@@ -1,0 +1,9 @@
+https://gemini.google.com/share/27b7978ad30e
+
+all of my interactions with ai are in this chat.
+
+somewhere in the middle of the conversation when i realised that i need to give him my assignment for better context i have prompted:
+
+from now on in this chat if given direct task dont give complete solutions. your job is to give me ideas, explanation and give examples on syntax if needed. if i give you my code dont fix or directly change it yourself without double confirmation. The only exception is when my code is not wrong but explicitly dangerous for system. if you have any questions about this instructions ask them.
+
+no code was generated.
