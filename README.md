@@ -1,4 +1,6 @@
-Thats what i managed to do in 7 hours
+Thats what i managed to do in 8 hours
 
-git repo:
+creation and submodule checking were mostly implemented.
+
+git repo: https://github.com/mrosliakov/git_assig2
 
