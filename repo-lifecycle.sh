@@ -6,7 +6,7 @@ if [ -z "$repo_path" ]; then
   repo_path="." 
 fi
 
-repo_path=$(readlink -f "$repo_path") # todo: remove this part after testing
+repo_path=$(readlink -f "$repo_path") 
 cd "$repo_path" || exit 1
 
 
@@ -37,7 +37,7 @@ create_repo() {
 
     git init -b "$main_branch" "$PNAME"
     cd "$PNAME" || exit 1
-    git commit --allow-empty -m "Initial empty snapshot for $main_branch branch"
+    git commit --allow-empty -m "Initial empty snapshot for $PNAME"
     echo "Initialized empty Git repository in $new_repo_path"
     
     # echo "Current directory after repo creation:"
@@ -83,8 +83,8 @@ create_repo() {
     done
     git config --global --unset protocol.file.allow
 
-    
-
+    repo_path="$new_repo_path"
+    echo "Repository created at $repo_path"
 }
 
 validate_repo() {
@@ -92,7 +92,45 @@ validate_repo() {
 }
 
 submodule_repo() {
-  echo "Submodule management implementation goes here."
+    cd "$repo_path" || exit 1
+    if ! is_repo; then
+        echo "Not a Git repository!" >&2
+        exit 1
+    fi
+
+    nested=0
+    git submodule foreach --quiet 'if [ -f .gitmodules ]; then exit 1; fi' || nested=1
+    if [ $nested -eq 1 ]; then
+        echo "Error: Nested submodules detected." >&2
+        exit 1
+    fi
+
+    submodules=$(git submodule status | awk '{print $2}')
+    if [ -z "$submodules" ]; then
+        echo "No submodules found."
+        return
+    fi
+
+    echo "Submodules:"
+
+    git submodule status | while read -r line; do
+        path=$(echo "$line" | awk '{print $2}')
+        sha_and_status=$(echo "$line" | awk '{print $1}')
+
+        if [[ "$sha_and_status" == -* ]]; then
+            status_desc="Not initialized"
+        elif [[ "$sha_and_status" == +* ]]; then
+            status_desc="New commits (needs parent update)"
+        else
+            if ! git -C "$path" diff-index --quiet HEAD --; then
+                status_desc="Uncommitted changes in worktree"
+            else
+                status_desc="Clean"
+            fi
+        fi
+        
+        printf "%-30s %s\n" "$path" "$status_desc"
+    done
 }
 
 # shellcheck disable=SC2120
