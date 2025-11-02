@@ -1,1 +1,3 @@
 /.vscode
+/testing/*
+!testing/fyi.txt

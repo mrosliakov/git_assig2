@@ -18,10 +18,8 @@ if [ -z "$repo_path" ]; then
   repo_path="." 
 fi
 
-# repo_path="./testing/$repo_path" 
-
-# touch "$repo_path/repo.log"
-# rm -f "$repo_path/repo.log"
+repo_path="./testing/$repo_path" # todo: remove this part after testing
+mkdir -p "$repo_path/test"
 
 command="${2}"
 
