@@ -44,31 +44,46 @@ create_repo() {
     # echo "Current directory after repo creation:"
     # pwd
 
-    # Asking for submodules
-    read -p "How many submodules would you like to add (up to 3)? (0 for none): " submodule_count
-    if ! [[ "$submodule_count" =~ ^[0-3]$ ]]; then
-      echo "Invalid number of submodules. Skipping submodule addition."
-      return
-    fi
-
     # Adding submodules
+    local submodules_added=()
     git config --global protocol.file.allow always
-    for (( i=1; i<=submodule_count; i++ )); do
-      read -p "Enter local path to add submodule $i: " submodule_path
-      read -p "Enter source directory of the submodule $i (relative to repository root): " submodule_source
-      source_abs_path=$(readlink -f "$submodule_source")
-      git submodule add "file://$source_abs_path" "$submodule_path"
-      echo "Added submodule $i: $submodule_source at $submodule_path"
-      read -p "Enter specific revision (commit hash, branch, or tag) for submodule $i (leave empty for default): " submodule_revision
-      if [ -n "$submodule_revision" ]; then
-        cd "$submodule_path" || exit 1
-        git checkout "$submodule_revision"
-        cd - || exit 1
-        echo "Checked out submodule $i to revision $submodule_revision"
+    local i=1
+    while true; do
+        read -p "Add submodule $i? (y/n): " add_choice
+        if [[ "$add_choice" != "y" ]]; then
+            break
+        fi
+
+        read -p "Enter local path for submodule $i: " submodule_path
+        read -p "Enter source directory of submodule $i (e.g., ../external-module): " submodule_source
+        
+        if (echo "$submodule_path" | grep -q /); then
+            echo "Error: Nested submodules ($submodule_path) are not allowed." >&2
+            exit 1
+        fi
+        
+        source_abs_path=$(readlink -f "$submodule_source")
+        if [ ! -d "$source_abs_path" ] || ! git -C "$source_abs_path" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+            echo "Error: Source $submodule_source is not a valid Git repository." >&2
+            continue 
+        fi
+
+        git submodule add "file://$source_abs_path" "$submodule_path"
+        echo "Added submodule $i: $submodule_source at $submodule_path"
+        read -p "Enter specific revision (commit hash, branch, or tag) for submodule $i (leave empty for default): " submodule_revision
+        if [ -n "$submodule_revision" ]; then
+            (
+            cd "$submodule_path" || exit 1
+            git checkout "$submodule_revision"
+        )
+            echo "Checked out submodule $i to revision $submodule_revision"
+        submodules_added+=("$submodule_path $submodule_revision")
+        else
+        submodules_added+=("$submodule_path default")
       fi
+      i=$((i + 1)) 
     done
     git config --global --unset protocol.file.allow
-
 
 }
 
